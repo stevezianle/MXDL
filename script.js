@@ -47,122 +47,118 @@ class ServerStatusManager {
 
     // 从API获取服务器状态
     async fetchServerStatus(serverAddress) {
-        const response = await fetch(`https://api.mcsrvstat.us/2/${serverAddress}`);
+        let newApiData = null;
+        let oldApiData = null;
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        try {
+            // 首先尝试使用新API获取服务器状态
+            const newApiResponse = await fetch(`https://uapis.cn/api/v1/game/minecraft/serverstatus?server=${encodeURIComponent(serverAddress)}`);
+            
+            if (newApiResponse.ok) {
+                newApiData = await newApiResponse.json();
+                console.log('新API响应:', newApiData);
+            } else {
+                console.warn('新API请求失败，状态码:', newApiResponse.status);
+            }
+        } catch (error) {
+            console.warn('新API请求异常:', error);
         }
         
-        const data = await response.json();
-        const processedData = this.processServerData(data);
+        // 检查新API数据是否完整
+        const isNewApiValid = newApiData && 
+                             newApiData.code === 200 && 
+                             newApiData.online !== undefined;
         
-        // 如果服务器在线，测量真实延迟
-        if (processedData.online) {
-            const realPing = await this.measureRealPing(serverAddress);
-            if (realPing !== null) {
-                processedData.debug.realPing = realPing;
+        if (isNewApiValid) {
+            // 新API数据有效，如果服务器在线则尝试获取旧API的补充信息
+            if (newApiData.online) {
+                try {
+                    const oldApiResponse = await fetch(`https://api.mcsrvstat.us/2/${serverAddress}`);
+                    if (oldApiResponse.ok) {
+                        oldApiData = await oldApiResponse.json();
+                        console.log('旧API响应:', oldApiData);
+                    }
+                } catch (error) {
+                    console.warn('旧API请求失败:', error);
+                }
+            }
+            
+            const processedData = this.processServerData(newApiData, oldApiData);
+            return processedData;
+        } else {
+            // 新API无效或无响应，完全回退到旧API
+            console.log('新API数据无效，回退到旧API');
+            try {
+                const oldApiResponse = await fetch(`https://api.mcsrvstat.us/2/${serverAddress}`);
+                if (oldApiResponse.ok) {
+                    oldApiData = await oldApiResponse.json();
+                    console.log('回退到旧API的响应:', oldApiData);
+                    
+                    // 将旧API数据转换为新API格式
+                    const fallbackData = this.convertOldApiToNewApiFormat(oldApiData);
+                    const processedData = this.processServerData(fallbackData, oldApiData);
+                    return processedData;
+                } else {
+                    throw new Error(`旧API请求失败，状态码: ${oldApiResponse.status}`);
+                }
+            } catch (error) {
+                console.error('所有API请求都失败:', error);
+                throw new Error('无法获取服务器状态，请检查网络连接');
             }
         }
+    }
+
+    // 处理服务器数据 - 合并新API和旧API的数据
+    processServerData(newApiData, oldApiData) {
+        // 新API不提供延迟信息，如果服务器在线就显示"< 100ms"
+        const pingValue = newApiData.online ? null : null;
         
-        return processedData;
-    }
-
-    // 测量真实延迟（从浏览器ping服务器）
-    async measureRealPing(serverAddress) {
-        return new Promise((resolve) => {
-            const [host, port] = serverAddress.split(':');
-            const startTime = performance.now();
-            
-            // 使用WebSocket连接尝试测量延迟
-            const ws = new WebSocket(`ws://${host}:${port}`);
-            
-            const timeout = setTimeout(() => {
-                ws.close();
-                resolve(null); // 超时返回null
-            }, 5000);
-            
-            ws.onopen = () => {
-                const endTime = performance.now();
-                clearTimeout(timeout);
-                ws.close();
-                resolve(Math.round(endTime - startTime));
-            };
-            
-            ws.onerror = () => {
-                clearTimeout(timeout);
-                // WebSocket失败，尝试使用Image ping
-                this.measureImagePing(host, port).then(resolve).catch(() => resolve(null));
-            };
-        });
-    }
-
-    // 备选方案：使用Image ping测量延迟
-    async measureImagePing(host, port) {
-        return new Promise((resolve, reject) => {
-            const startTime = performance.now();
-            const img = new Image();
-            
-            // 尝试连接服务器图标或favicon
-            img.src = `http://${host}:${port}/favicon.ico?t=${Date.now()}`;
-            
-            const timeout = setTimeout(() => {
-                img.onload = img.onerror = null;
-                reject(new Error('Image ping timeout'));
-            }, 3000);
-            
-            img.onload = () => {
-                clearTimeout(timeout);
-                const endTime = performance.now();
-                resolve(Math.round(endTime - startTime));
-            };
-            
-            img.onerror = () => {
-                clearTimeout(timeout);
-                reject(new Error('Image ping failed'));
-            };
-        });
-    }
-
-    // 处理服务器数据
-    processServerData(data) {
-        // 处理ping字段，确保显示具体的延迟数值
-        let pingValue = data.debug?.ping;
-        if (pingValue === true) {
-            pingValue = null; // 如果API返回true，设为null
-        } else if (typeof pingValue === 'number') {
-            pingValue = Math.round(pingValue); // 确保是整数
-        } else if (pingValue === false || pingValue === undefined) {
-            pingValue = null; // 其他无效值设为null
+        // 合并玩家列表：优先使用旧API的玩家列表，如果没有则使用空数组
+        let playersList = [];
+        if (oldApiData && oldApiData.players && oldApiData.players.list) {
+            playersList = oldApiData.players.list;
         }
         
+        // 合并图标：优先使用旧API的图标，如果没有则使用新API的图标
+        let icon = null;
+        if (oldApiData && oldApiData.icon) {
+            icon = oldApiData.icon;
+        } else if (newApiData.favicon_url) {
+            icon = newApiData.favicon_url;
+        }
+        
+        // 合并玩家数量：优先使用新API的数据，因为更准确
+        const playersOnline = newApiData.players || (oldApiData && oldApiData.players ? oldApiData.players.online : 0);
+        const playersMax = newApiData.max_players || (oldApiData && oldApiData.players ? oldApiData.players.max : 0);
+        
         return {
-            online: data.online || false,
-            ip: data.ip || '未知',
-            port: data.port || '未知',
-            hostname: data.hostname || '未知',
-            icon: data.icon || null,
-            version: data.version || '未知',
-            protocol: data.protocol || '未知',
-            protocolName: data.protocol_name || '未知',
+            online: newApiData.online || false,
+            ip: newApiData.ip || (oldApiData && oldApiData.ip) || '未知',
+            port: newApiData.port || (oldApiData && oldApiData.port) || '未知',
+            hostname: newApiData.hostname || (oldApiData && oldApiData.hostname) || '未知',
+            icon: icon,
+            version: newApiData.version || (oldApiData && oldApiData.version) || '未知',
+            protocol: (oldApiData && oldApiData.protocol) || '未知',
+            protocolName: (oldApiData && oldApiData.protocolName) || '未知',
             players: {
-                online: data.players?.online || 0,
-                max: data.players?.max || 0,
-                list: data.players?.list || []
+                online: playersOnline,
+                max: playersMax,
+                list: playersList
             },
             motd: {
-                raw: data.motd?.raw || [],
-                clean: data.motd?.clean || [],
-                html: data.motd?.html || []
+                raw: (oldApiData && oldApiData.motd && oldApiData.motd.raw) || [],
+                clean: [newApiData.motd_clean || (oldApiData && oldApiData.motd && oldApiData.motd.clean && oldApiData.motd.clean[0]) || ''],
+                html: [newApiData.motd_html || (oldApiData && oldApiData.motd && oldApiData.motd.html && oldApiData.motd.html[0]) || '']
             },
             debug: {
                 ping: pingValue,
-                query: data.debug?.query || false,
-                cacheHit: data.debug?.cachehit || false
+                query: (oldApiData && oldApiData.debug && oldApiData.debug.query) || false,
+                cacheHit: false
             },
-            software: data.software || '未知',
-            gamemode: data.gamemode || '生存',
-            map: data.map || '未知',
-            plugins: data.plugins?.names || []
+            software: (oldApiData && oldApiData.software) || '未知',
+            gamemode: (oldApiData && oldApiData.gamemode) || '生存',
+            map: (oldApiData && oldApiData.map) || '未知',
+            plugins: (oldApiData && oldApiData.plugins) || []
         };
     }
 
@@ -175,30 +171,41 @@ class ServerStatusManager {
         return cravatarUrl; // 直接返回Cravatar，因为更可靠
     }
 
-    // 渲染MOTD（处理颜色代码）
+    // 将旧API数据转换为新API格式
+    convertOldApiToNewApiFormat(oldApiData) {
+        // 将旧API的MOTD转换为新API格式
+        let motdClean = '';
+        let motdHtml = '';
+        
+        if (oldApiData.motd && oldApiData.motd.clean && oldApiData.motd.clean.length > 0) {
+            motdClean = oldApiData.motd.clean.join('\n');
+            // 简单地将纯文本MOTD转换为HTML格式
+            motdHtml = oldApiData.motd.clean.map(line => `<span style="color: #ffffff">${line}</span>`).join('<br>');
+        }
+        
+        return {
+            code: 200,
+            online: oldApiData.online || false,
+            ip: oldApiData.ip || '未知',
+            port: oldApiData.port || '未知',
+            hostname: oldApiData.hostname || '未知',
+            players: oldApiData.players ? oldApiData.players.online : 0,
+            max_players: oldApiData.players ? oldApiData.players.max : 0,
+            version: oldApiData.version || '未知',
+            motd_clean: motdClean,
+            motd_html: motdHtml,
+            favicon_url: oldApiData.icon || null
+        };
+    }
+
+    // 渲染MOTD（新API直接提供HTML格式）
     renderMOTD(motdHtml) {
         if (!motdHtml || !Array.isArray(motdHtml)) {
             return '';
         }
         
-        return motdHtml.map(line => {
-            // 处理Minecraft颜色代码 §
-            let processedLine = line.replace(/§([0-9a-fk-or])/g, (match, code) => {
-                return `</span><span class="mc-color-${code}">`;
-            }).replace(/§r/g, '</span><span>');
-            
-            // 确保有起始span
-            if (!processedLine.startsWith('<span')) {
-                processedLine = '<span>' + processedLine;
-            }
-            
-            // 确保有结束span
-            if (!processedLine.endsWith('</span>')) {
-                processedLine = processedLine + '</span>';
-            }
-            
-            return processedLine;
-        }).join('<br>');
+        // 新API直接提供HTML格式的MOTD，直接返回
+        return motdHtml.join('<br>');
     }
 }
 
