@@ -1,445 +1,228 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="auto">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.8, user-scalable=no">
-    <title>梦想大陆服务器</title>
-    <style>
-        html {
-            zoom: 0.8;
-            -moz-transform: scale(0.8);
-            -moz-transform-origin: 0 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #ffffff;
-            padding: 20px;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* 顶部标题 + 介绍 */
-        .header-box {
-            width: 100%;
-            max-width: 800px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .top-title {
-            font-size: 3em;
-            font-weight: 700;
-            color: #2c3e50;
-            letter-spacing: 2px;
-            margin-bottom: 15px;
-        }
-
-        .intro-text {
-            font-size: 1.15em;
-            color: #495057;
-            line-height: 1.8;
-            text-indent: 2em;
-            text-align: justify;
-        }
-
-        /* 渐变绿背景地址区 */
-        .address-area {
-            width: 100%;
-            max-width: 800px;
-            background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
-            border-radius: 16px;
-            padding: 25px 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 5px 20px rgba(150, 230, 161, 0.35);
-        }
-
-        .addr-left {
-            text-align: left;
-            margin-bottom: 15px;
-        }
-
-        .addr-right {
-            text-align: right;
-        }
-
-        .addr-title {
-            font-size: 1.3em;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .addr-text {
-            font-size: 1.1em;
-            color: #2c3e50;
-            line-height: 1.6;
-        }
-
-        /* 下方监测模块 */
-        .status-module {
-            width: 100%;
-            max-width: 800px;
-            background: #f8f9fa;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e9ecef;
-        }
-
-        /* 输入框与左侧选项容器 */
-        .input-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        /* 左侧选项（两个按钮模块） */
-        .server-btns {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .server-btn {
-            width: 80px;
-            height: 46px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: #ffffff;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 3px 10px rgba(79, 172, 254, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .server-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.45);
-        }
-
-        /* 地址输入框 */
-        .address-input {
-            flex: 1;
-            height: 46px;
-            padding: 0 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1.1em;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .address-input:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-        }
-
-        .status-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .status {
-            padding: 10px 24px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .online {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .offline {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .refresh-icon {
-            font-size: 1.6em;
-            color: #6c757d;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .refresh-icon:hover {
-            color: #007bff;
-            transform: scale(1.1);
-        }
-
-        .refresh-icon.rotating {
-            animation: rotate 1s linear infinite;
-            color: #007bff;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .info-item {
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .info-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .info-label {
-            color: #6c757d;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-
-        .info-value {
-            color: #2c3e50;
-            font-size: 1.3em;
-            font-weight: bold;
-        }
-
-        .motd {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            font-style: italic;
-            color: #495057;
-            border: 1px solid #e9ecef;
-            font-size: 1.1em;
-            line-height: 1.6;
-        }
-
-        .refresh-btn {
-            background: #007bff;
-            color: #ffffff;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 25px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-            width: 100%;
-            font-weight: 600;
-        }
-
-        .refresh-btn:hover {
-            background: #0056b3;
-            transform: scale(1.02);
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
-        }
-
-        .loading {
-            color: #6c757d;
-            font-size: 1.2em;
-        }
-
-        .error {
-            color: #dc3545;
-            background: #f8d7da;
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-            border: 1px solid #f5c6cb;
-        }
-
-        .additional-info {
-            margin-top: 20px;
-            padding: 15px;
-            background: #ffffff;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
-
-        .additional-info h3 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 1.2em;
-        }
-
-        .additional-info p {
-            color: #495057;
-            margin: 5px 0;
-            font-size: 0.95em;
-        }
-
-        .last-update {
-            color: #6c757d;
-            font-size: 0.9em;
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        @media (max-width: 600px) {
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            .top-title {
-                font-size: 2.2em;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>梦想大陆 - Minecraft 服务器状态</title>
+    <meta name="description" content="梦想大陆 Minecraft 服务器 - 公益不跑路，生电友好，活跃社区">
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 样式文件 -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- 图标 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
 </head>
 <body>
-
-    <!-- 页面顶部：标题 + 介绍 -->
-    <div class="header-box">
-        <h1 class="top-title">梦想大陆服务器</h1>
-        <p class="intro-text">
-            本服自2025年暑假开服，腐竹开服经验丰富，目前已有两个服务器，1服玩法为生电插件服，2服是整合包服，需在群里下载对应客户端加入，版本相对来说很新1.21.8or1.21.1欢迎大家加入
-        </p>
-    </div>
-
-    <!-- 渐变绿背景地址区 -->
-    <div class="address-area">
-        <div class="addr-left">
-            <div class="addr-title">1服地址</div>
-            <div class="addr-text">play.simpfun.cn:30786<br>插件服,鼓励生电</div>
-        </div>
-        <div class="addr-right">
-            <div class="addr-title">二服地址</div>
-            <div class="addr-text">play.simpfun.cn:17795<br>此服为整合包玩法<br>需要在群里下载对应整合包加入</div>
-        </div>
-    </div>
-
-    <!-- 下方监测模块 -->
-    <div class="status-module">
-        <!-- 输入框与左侧选项 -->
-        <div class="input-row">
-            <div class="server-btns">
-                <button class="server-btn" onclick="setServer(1)">一服</button>
-                <button class="server-btn" onclick="setServer(2)">二服</button>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <span>梦想大陆</span>
+                </div>
             </div>
-            <input type="text" id="serverAddress" class="address-input" value="play.simpfun.cn:30786" placeholder="输入服务器地址 (如: mc.hypixel.net)">
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
         </div>
+    </nav>
 
-        <div class="status-container">
-            <div id="status" class="loading">正在检测服务器状态...</div>
-            <span id="refreshIcon" class="refresh-icon" onclick="checkServer()">⚙️</span>
+    <!-- 英雄区域 -->
+    <section class="hero">
+        <div class="hero-background">
+            <!-- Windows 11 风格浮动光球背景 -->
+            <div class="floating-orbs">
+                <div class="floating-orb"></div>
+                <div class="floating-orb"></div>
+                <div class="floating-orb"></div>
+                <div class="floating-orb"></div>
+                <div class="floating-orb"></div>
+            </div>
+            
+            <!-- 毛玻璃覆盖层 -->
+            <div class="glass-overlay"></div>
         </div>
-
-        <div class="info-grid">
-            <div class="info-item"><div class="info-label">在线玩家</div><div id="players" class="info-value">--</div></div>
-            <div class="info-item"><div class="info-label">最大玩家数</div><div id="maxPlayers" class="info-value">--</div></div>
-            <div class="info-item"><div class="info-label">延迟</div><div id="latency" class="info-value">--</div></div>
-            <div class="info-item"><div class="info-label">版本</div><div id="version" class="info-value">--</div></div>
-            <div class="info-item"><div class="info-label">游戏模式</div><div id="gamemode" class="info-value">--</div></div>
-            <div class="info-item"><div class="info-label">服务器软件</div><div id="software" class="info-value">--</div></div>
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="title-gradient">梦想大陆</span>
+                <span class="title-sub">Minecraft 服务器</span>
+            </h1>
+            <p class="hero-subtitle">公益不跑路 · 生电友好 · 活跃社区</p>
+            
+            <!-- 服务器特色标签 -->
+            <div class="feature-tags">
+                <span class="feature-tag"><i class="fas fa-bolt"></i> 生电友好</span>
+                <span class="feature-tag"><i class="fas fa-box"></i> 整合包</span>
+                <span class="feature-tag"><i class="fas fa-heart"></i> 公益服</span>
+                <span class="feature-tag"><i class="fas fa-users"></i> 活跃社区</span>
+            </div>
         </div>
+    </section>
 
-        <div id="motd" class="motd" style="display: none;"></div>
-
-        <div class="additional-info">
-            <h3>📊 详细信息</h3>
-            <p>🌐 协议版本: <span id="protocol">--</span></p>
-            <p>🗺️ 地图: <span id="map">--</span></p>
-            <p>🎯 插件数量: <span id="plugins">--</span></p>
-            <p>⏱️ 运行时间: <span id="uptime">--</span></p>
+    <!-- 服务器状态区域 -->
+    <section class="servers-section">
+        <div class="container">
+            <h2 class="section-title">服务器状态</h2>
+            
+            <div class="servers-grid" id="serversGrid">
+                <!-- 服务器卡片将通过JavaScript动态生成 -->
+            </div>
         </div>
+    </section>
 
-        <button class="refresh-btn" onclick="checkServer()">🔄 刷新状态</button>
+    <!-- 玩家在线区域 -->
+    <section class="players-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">在线玩家</h2>
+                <div class="players-controls">
+                    <div class="search-box">
+                        <input type="text" id="playerSearch" placeholder="搜索玩家..." class="search-input">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+                    <button class="toggle-btn" id="togglePlayers">
+                        <span>展开</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="players-container" id="playersContainer">
+                <div class="players-grid" id="playersGrid">
+                    <!-- 玩家卡片将通过JavaScript动态生成 -->
+                </div>
+                <div class="no-players" id="noPlayers" style="display: none;">
+                    <i class="fas fa-users-slash"></i>
+                    <p>当前没有玩家在线</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <div class="last-update">最后更新：<span id="lastUpdate">--</span></div>
-    </div>
+    <!-- 加入指南区域 -->
+    <section class="join-guide">
+        <div class="container">
+            <h2 class="section-title">加入指南</h2>
+            
+            <div class="guide-steps">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>选择服务器</h3>
+                        <div class="step-details">
+                            <div class="server-choice">
+                                <h4>一服 - 生电插件服</h4>
+                                <p>直接加入，无需下载</p>
+                                <code class="server-address">play.simpfun.cn:30786</code>
+                            </div>
+                            <div class="server-choice">
+                                <h4>二服 - 整合包服</h4>
+                                <p>需下载客户端整合包</p>
+                                <code class="server-address">play.simpfun.cn:17795</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>加入QQ群</h3>
+                        <p>获取最新信息、整合包下载和技术支持</p>
+                        <div class="qrcode-section">
+                            <div class="qrcode-image">
+                                <img src="qqqrcode.jpg" alt="QQ群二维码" loading="lazy">
+                            </div>
+                            <div class="group-info">
+                                <p><strong>群号：</strong>865095440</p>
+                                <p><strong>链接：</strong><a href="https://qm.qq.com/q/51Q8MsbbgQ" target="_blank">点击加入</a></p>
+                                <p class="group-desc">活跃社区，随时交流</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>开始游戏</h3>
+                        <p>启动Minecraft，添加服务器，享受游戏！</p>
+                        <div class="game-tips">
+                            <div class="tip">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>建议使用最新版本客户端</span>
+                            </div>
+                            <div class="tip">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>遵守服务器规则，文明游戏</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <script>
-        let currentServer = 'play.simpfun.cn:30786';
-        let isRefreshing = false;
+    <!-- 自定义检测区域 -->
+    <section class="custom-check">
+        <div class="container">
+            <h2 class="section-title">自定义服务器检测</h2>
+            <div class="check-card">
+                <div class="input-group">
+                    <input type="text" id="customServer" placeholder="输入服务器地址 (如: mc.hypixel.net)" class="custom-input">
+                    <button class="check-btn" id="checkCustom">
+                        <i class="fas fa-search"></i>
+                        检测
+                    </button>
+                </div>
+                <div class="check-result" id="customResult" style="display: none;">
+                    <!-- 自定义检测结果 -->
+                </div>
+            </div>
+        </div>
+    </section>
 
-        document.getElementById('serverAddress').addEventListener('change', function () {
-            currentServer = this.value;
-            checkServer();
-        });
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <div class="footer-logo">
+                        <i class="fas fa-cube"></i>
+                        <span>梦想大陆</span>
+                    </div>
+                    <p class="footer-desc">自 2025 年暑假开服 · 公益不跑路</p>
+                </div>
+                <div class="footer-links">
+                    <a href="https://qm.qq.com/q/51Q8MsbbgQ" target="_blank" class="footer-link">
+                        <i class="fab fa-qq"></i>
+                        QQ群
+                    </a>
+                    <span class="footer-link">
+                        <i class="fas fa-users"></i>
+                        社区驱动
+                    </span>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 梦想大陆 Minecraft 服务器. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
 
-        function setServer(num) {
-            currentServer = num === 1 ? 'play.simpfun.cn:30786' : 'play.simpfun.cn:17795';
-            document.getElementById('serverAddress').value = currentServer;
-            checkServer();
-        }
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toastContainer"></div>
 
-        async function checkServer() {
-            if (isRefreshing) return;
-            isRefreshing = true;
-            const statusEl = document.getElementById('status');
-            const refreshIcon = document.getElementById('refreshIcon');
-            const lastUpdateEl = document.getElementById('lastUpdate');
-            refreshIcon.classList.add('rotating');
-            statusEl.textContent = '正在检测...';
-            statusEl.className = 'loading';
-
-            try {
-                const res = await fetch(`https://api.mcsrvstat.us/2/${currentServer}`);
-                const data = await res.json();
-
-                if (data.online) {
-                    statusEl.textContent = '🟢 服务器在线';
-                    statusEl.className = 'status online';
-                    document.getElementById('players').textContent = data.players.online;
-                    document.getElementById('maxPlayers').textContent = data.players.max;
-                    document.getElementById('latency').textContent = data.debug?.ping ? `${data.debug.ping}ms` : '< 100ms';
-                    document.getElementById('version').textContent = data.version || '未知';
-                    document.getElementById('software').textContent = data.software || '未知';
-                    document.getElementById('gamemode').textContent = data.gamemode || '生存';
-                    document.getElementById('protocol').textContent = data.protocol || '自动';
-                    document.getElementById('map').textContent = data.map || '未知';
-                    document.getElementById('plugins').textContent = data.plugins?.names?.length || '未知';
-                    document.getElementById('uptime').textContent = '超过1年';
-
-                    if (data.motd && data.motd.clean) {
-                        document.getElementById('motd').innerHTML = data.motd.clean.join('<br>');
-                        document.getElementById('motd').style.display = 'block';
-                    } else {
-                        document.getElementById('motd').style.display = 'none';
-                    }
-                } else {
-                    statusEl.textContent = '🔴 服务器离线';
-                    statusEl.className = 'status offline';
-                    ['players', 'maxPlayers', 'latency', 'version', 'gamemode', 'software', 'protocol', 'map', 'plugins', 'uptime'].forEach(id => {
-                        document.getElementById(id).textContent = '--';
-                    });
-                    document.getElementById('motd').style.display = 'none';
-                }
-                lastUpdateEl.textContent = new Date().toLocaleTimeString('zh-CN');
-            } catch (err) {
-                statusEl.textContent = '⚠️ 检测失败';
-                statusEl.className = 'error';
-                console.error(err);
-            } finally {
-                isRefreshing = false;
-                refreshIcon.classList.remove('rotating');
-            }
-        }
-
-        // 初始加载 + 30 秒定时刷新
-        window.onload = () => {
-            checkServer();
-            setInterval(checkServer, 30000);
-        };
-    </script>
+    <!-- 脚本文件 -->
+    <script src="script.js"></script>
 </body>
 </html>
