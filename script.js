@@ -365,8 +365,6 @@ class MinecraftStatusApp {
         this.setupEventListeners();
         this.loadServerStatus();
         this.setupAutoRefresh();
-        this.setupScrollIndicator();
-        this.updateQuickStats(); // 初始化快速状态概览
     }
 
     // 设置事件监听器
@@ -404,18 +402,6 @@ class MinecraftStatusApp {
                 }
             }
         });
-
-        // 刷新按钮
-        const refreshBtn = document.getElementById('refreshBtn');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => this.refreshStatus());
-        }
-
-        // 滚动指示器
-        const scrollIndicator = document.querySelector('.scroll-indicator');
-        if (scrollIndicator) {
-            scrollIndicator.addEventListener('click', () => this.scrollToContent());
-        }
     }
 
     // 加载服务器状态
@@ -464,9 +450,6 @@ class MinecraftStatusApp {
 
             // 更新玩家列表
             this.updatePlayersList();
-            
-            // 更新快速状态概览
-            this.updateQuickStats();
 
         } catch (error) {
             console.error('加载服务器状态失败:', error);
@@ -539,6 +522,12 @@ class MinecraftStatusApp {
                 ${motdHTML}
             </div>
             ` : ''}
+            
+            ${server.description ? `
+            <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--neutral-600);">
+                <i class="fas fa-info-circle"></i> ${server.description}
+            </div>
+            ` : ''}
         `;
     }
 
@@ -546,9 +535,8 @@ class MinecraftStatusApp {
     updatePlayersList() {
         const playersGrid = document.getElementById('playersGrid');
         const noPlayers = document.getElementById('noPlayers');
-        const playersCount = document.getElementById('playersCount');
         
-        if (!playersGrid || !noPlayers || !playersCount) return;
+        if (!playersGrid || !noPlayers) return;
 
         // 获取所有在线玩家
         let allPlayers = [];
@@ -558,9 +546,6 @@ class MinecraftStatusApp {
                 allPlayers = [...allPlayers, ...cached.data.players.list];
             }
         });
-
-        // 更新玩家计数显示
-        playersCount.textContent = `${allPlayers.length} 位玩家在线`;
 
         playersGrid.innerHTML = '';
         
@@ -725,99 +710,6 @@ class MinecraftStatusApp {
             // 恢复按钮状态
             checkBtn.innerHTML = originalText;
             checkBtn.disabled = false;
-        }
-    }
-
-    // 刷新状态
-    async refreshStatus() {
-        const refreshBtn = document.getElementById('refreshBtn');
-        if (refreshBtn) {
-            refreshBtn.classList.add('refreshing');
-            refreshBtn.disabled = true;
-        }
-        
-        try {
-            // 清除缓存强制刷新
-            this.statusManager.cache.clear();
-            await this.loadServerStatus();
-            this.toastManager.show('状态已刷新', 'success');
-        } catch (error) {
-            console.error('刷新状态失败:', error);
-            this.toastManager.show('刷新失败，请稍后重试', 'error');
-        } finally {
-            if (refreshBtn) {
-                refreshBtn.classList.remove('refreshing');
-                refreshBtn.disabled = false;
-            }
-        }
-    }
-
-    // 滚动到内容区域
-    scrollToContent() {
-        const serversSection = document.querySelector('.servers-section');
-        if (serversSection) {
-            serversSection.scrollIntoView({ 
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    }
-
-    // 设置滚动指示器
-    setupScrollIndicator() {
-        const scrollIndicator = document.querySelector('.scroll-indicator');
-        if (!scrollIndicator) return;
-
-        // 监听滚动事件，隐藏滚动指示器
-        const handleScroll = () => {
-            if (window.scrollY > 100) {
-                scrollIndicator.style.opacity = '0';
-                scrollIndicator.style.pointerEvents = 'none';
-            } else {
-                scrollIndicator.style.opacity = '1';
-                scrollIndicator.style.pointerEvents = 'auto';
-            }
-        };
-
-        window.addEventListener('scroll', handleScroll);
-    }
-
-    // 更新快速状态概览
-    updateQuickStats() {
-        const totalPlayersEl = document.getElementById('totalPlayers');
-        const onlineServersEl = document.getElementById('onlineServers');
-        const avgPingEl = document.getElementById('avgPing');
-        
-        if (!totalPlayersEl || !onlineServersEl || !avgPingEl) return;
-
-        let totalPlayers = 0;
-        let onlineServers = 0;
-        let totalPing = 0;
-        let pingCount = 0;
-
-        // 统计所有服务器的状态
-        Object.values(this.statusManager.servers).forEach(server => {
-            const cached = this.statusManager.cache.get(server.address);
-            if (cached && cached.data.online) {
-                onlineServers++;
-                totalPlayers += cached.data.players.online || 0;
-                
-                if (cached.data.debug.ping) {
-                    totalPing += cached.data.debug.ping;
-                    pingCount++;
-                }
-            }
-        });
-
-        // 更新UI
-        totalPlayersEl.textContent = totalPlayers;
-        onlineServersEl.textContent = `${onlineServers}/2`;
-        
-        if (pingCount > 0) {
-            const avgPing = Math.round(totalPing / pingCount);
-            avgPingEl.textContent = `${avgPing}ms`;
-        } else {
-            avgPingEl.textContent = '--';
         }
     }
 
